@@ -16,6 +16,15 @@ RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua
 # 安装 Playwright 的 Chromium 浏览器
 RUN python3 -m playwright install chromium --with-deps
 
+# 将 Playwright 自带的 Chromium 链接到 PATH，使 _detect_browser_path() 能找到
+RUN CHROME_PATH=$(find /root/.cache/ms-playwright -name "chrome" -type f 2>/dev/null | head -1) && \
+    if [ -n "$CHROME_PATH" ]; then \
+        ln -sf "$CHROME_PATH" /usr/local/bin/chromium && \
+        echo "Linked Chromium: $CHROME_PATH"; \
+    else \
+        echo "WARNING: Chromium binary not found!"; \
+    fi
+
 # 复制项目代码
 COPY . .
 
