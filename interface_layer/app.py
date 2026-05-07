@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from interface_layer.api.exception_handlers import interface_error_handler, validation_error_handler
@@ -61,6 +61,11 @@ def create_app(runtime: RuntimeBackend | None = None, profile_root: Path | None 
     app.state.admin_token = admin_token
     app.state.session_store = store
     app.state.mcp_server = mcp_server
+
+    @app.get("/health")
+    async def health():
+        """Zeabur 健康检查端点。"""
+        return Response(status_code=200)
 
     @app.middleware("http")
     async def debug_raw_middleware(request: Request, call_next):
