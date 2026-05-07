@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "session_id": "sess_01hv7r6s9z8x",
+        "status": "bound",
+        "bound": true,
+        "purpose": "xhs research",
+        "login": {
+          "state": "ready",
+          "required_action": "none"
+        },
+        "current_context": {
+          "type": "note",
+          "note_id": "690632c500000000040134d0"
+        },
+        "created_at": "2026-04-30T09:00:00Z",
+        "updated_at": "2026-04-30T09:30:00Z"
+      }
+    ]
+  },
+  "meta": {
+    "request_id": "req_01hv7rf2p3kp",
+    "operation": "listSessions",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

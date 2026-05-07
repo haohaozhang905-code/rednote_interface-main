@@ -1,0 +1,11 @@
+{
+  "token": "btok_01hv7r8f5c3p",
+  "keyword": "露营装备",
+  "sort": "general",
+  "filters": {
+    "filter_note_type": "不限"
+  },
+  "page": 1,
+  "page_size": 20,
+  "limit": 20
+}

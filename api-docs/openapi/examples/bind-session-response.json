@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "data": {
+    "session_id": "sess_01hv7r6s9z8x",
+    "token": "btok_01hv7r8f5c3p",
+    "status": "bound"
+  },
+  "meta": {
+    "request_id": "req_01hv7r8n2e4b",
+    "session_id": "sess_01hv7r6s9z8x",
+    "operation": "bindSession",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

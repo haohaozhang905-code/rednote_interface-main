@@ -1,0 +1,11 @@
+apis:
+  xhs-interface@v0.1.0:
+    root: ../openapi/dist/openapi.zh.yaml
+extends:
+  - recommended
+theme:
+  openapi:
+    layout: three-panel
+    hideDownloadButton: false
+    pathInMiddlePanel: true
+    showObjectSchemaExamples: true

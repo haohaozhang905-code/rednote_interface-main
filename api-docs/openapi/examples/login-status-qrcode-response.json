@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "data": {
+    "state": "waiting_qr_scan",
+    "required_action": "scan_qr",
+    "challenge": {
+      "challenge_id": "qrch_01hv7rg0x9qm",
+      "type": "security_qr",
+      "sequence": 2,
+      "status": "pending",
+      "image_base64": "iVBORw0KGgoAAAANSUhEUgAA...",
+      "image_mime": "image/png",
+      "issued_at": "2026-04-30T09:31:00Z",
+      "expires_at": "2026-04-30T09:33:00Z",
+      "message": "Scan the latest QR code to continue verification."
+    }
+  },
+  "meta": {
+    "request_id": "req_01hv7rg7wb4a",
+    "session_id": "sess_01hv7r6s9z8x",
+    "operation": "getLoginStatus",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

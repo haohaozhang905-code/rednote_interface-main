@@ -1,0 +1,1439 @@
+openapi: 3.1.0
+info:
+  title: XHS Interface Layer API
+  version: 0.1.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: |
+    API-first contract for the XHS interface layer.
+
+    The interface layer exposes API-only atomic tools over isolated sessions. Each
+    session owns its own user data directory. A session must be bound before any
+    state-changing or crawling operation can run, and the returned token is the
+    proof of current ownership.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+security: []
+tags:
+  - name: Sessions
+    description: Public session lifecycle and binding operations.
+  - name: Login
+    description: Login actions and login status for a bound session.
+  - name: Search
+    description: Search operations that create current searchable note_id context.
+  - name: Notes
+    description: Note access operations that set the current note context.
+  - name: Comments
+    description: Comment operations constrained by the current note context.
+  - name: Diagnostics
+    description: Lightweight diagnostics for sessions and requests.
+  - name: Admin
+    description: Management-only operations. Normal applications must not call them directly.
+paths:
+  /v1/sessions:
+    get:
+      tags: [Sessions]
+      summary: List sessions
+      description: Returns session state dictionaries for normal application coordination. Sensitive paths, cookies, tokens, and raw diagnostics are not returned.
+      operationId: listSessions
+      parameters:
+        - name: bound
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bound, idle]
+      responses:
+        "200":
+          description: Session list.
+          content:
+            application/json:
+              examples:
+                default:
+                  externalValue: ./examples/list-sessions-response.json
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/SessionState"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+    post:
+      tags: [Sessions]
+      summary: Create session
+      description: Creates a long-lived isolated identity container with a dedicated browser profile using the service default environment. Login state and runtime context are process-local and reset after service restart.
+      operationId: createSession
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+            examples:
+              default:
+                value:
+                  purpose: "xhs research"
+      responses:
+        "201":
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SessionCreated"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "409":
+          $ref: "#/components/responses/SessionQuotaExceeded"
+        "500":
+          $ref: "#/components/responses/SessionCreateFailed"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/bind:
+    post:
+      tags: [Sessions]
+      summary: Bind session
+      description: Claims exclusive use of an idle session and returns an ownership token. This endpoint does not accept profile configuration.
+      operationId: bindSession
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session bound.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SessionBound"
+        "409":
+          $ref: "#/components/responses/SessionBusy"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/unbind:
+    post:
+      tags: [Sessions]
+      summary: Unbind session
+      description: Releases exclusive use of the session. The browser profile is kept; process-local login state and runtime context are kept only while the process is alive.
+      operationId: unbindSession
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "200":
+          description: Session unbound.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/login:
+    post:
+      tags: [Login]
+      summary: Run login action
+      description: Uses one endpoint for all login actions. The action field selects the concrete login behavior.
+      operationId: runLoginAction
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginActionRequest"
+            examples:
+              qrcode:
+                value:
+                  token: "btok_example"
+                  action: qrcode
+              cookie:
+                value:
+                  token: "btok_example"
+                  action: cookie
+                  cookie: "a1=...; web_session=..."
+              phone_start:
+                value:
+                  token: "btok_example"
+                  action: phone_start
+                  phone: "+8613800000000"
+              phone_submit:
+                value:
+                  token: "btok_example"
+                  action: phone_submit
+                  code: "123456"
+      responses:
+        "200":
+          description: Login action accepted or completed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginStatus"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "429":
+          $ref: "#/components/responses/RiskBlocked"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/login/status:
+    get:
+      tags: [Login]
+      summary: Get login status
+      description: Pure query. Token is optional and only used for logging and traceability when present.
+      operationId: getLoginStatus
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/OptionalToken"
+      responses:
+        "200":
+          description: Login status.
+          content:
+            application/json:
+              examples:
+                qrcode:
+                  externalValue: ./examples/login-status-qrcode-response.json
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginStatus"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/search:
+    post:
+      tags: [Search]
+      summary: Search posts
+      description: Searches posts and records returned note_id values as the current search context. The response keeps the original platform search response under one result-level raw field.
+      operationId: searchPosts
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchPostsRequest"
+      responses:
+        "200":
+          description: Search result.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SearchPostsResult"
+              examples:
+                searchPosts:
+                  externalValue: ./examples/search-posts-response.json
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/InvalidTokenOrLoginRequired"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "429":
+          $ref: "#/components/responses/RiskBlocked"
+        "502":
+          $ref: "#/components/responses/RequestFailedOrParserChanged"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/notes/open-from-search:
+    post:
+      tags: [Notes]
+      summary: Open note from search result
+      description: Opens a note by note_id from the current compatible search context. The response keeps the original note object extracted from page state under raw.
+      operationId: openNoteFromSearch
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenNoteFromSearchRequest"
+      responses:
+        "200":
+          description: Current note context updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/NoteOpenResult"
+              examples:
+                openNote:
+                  externalValue: ./examples/open-note-response.json
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionOrNoteNotFound"
+        "409":
+          $ref: "#/components/responses/InvalidOrStaleContext"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/notes/open-by-xsec:
+    post:
+      tags: [Notes]
+      summary: Open note by xsec
+      description: Opens a note by directly constructing the explorer URL from note_id and xsec parameters. The response keeps the original note object extracted from page state under raw.
+      operationId: openNoteByXsec
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenNoteByXsecRequest"
+      responses:
+        "200":
+          description: Current note context updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/NoteOpenResult"
+              examples:
+                openNote:
+                  externalValue: ./examples/open-note-response.json
+        "400":
+          $ref: "#/components/responses/InvalidXsecToken"
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionOrNoteNotFound"
+        "429":
+          $ref: "#/components/responses/RiskBlocked"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/comments/root:
+    post:
+      tags: [Comments]
+      summary: Fetch root comments
+      description: Fetches root comments for the current note context only. The response keeps the original platform comment response under one result-level raw field.
+      operationId: fetchRootComments
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchRootCommentsRequest"
+      responses:
+        "200":
+          description: Root comments.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RootCommentsResult"
+              examples:
+                rootComments:
+                  externalValue: ./examples/root-comments-response.json
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "409":
+          $ref: "#/components/responses/InvalidOrStaleContext"
+        "502":
+          $ref: "#/components/responses/RequestFailedOrParserChanged"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/comments/sub:
+    post:
+      tags: [Comments]
+      summary: Fetch sub-comments
+      description: Fetches sub-comments for a root_comment_id that belongs to the current note context. The response keeps the original platform comment response under one result-level raw field.
+      operationId: fetchSubComments
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchSubCommentsRequest"
+      responses:
+        "200":
+          description: Sub-comments.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SubCommentsResult"
+              examples:
+                sub_comments:
+                  externalValue: ./examples/sub-comments-response.json
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "409":
+          $ref: "#/components/responses/InvalidOrStaleContext"
+        "502":
+          $ref: "#/components/responses/RequestFailedOrParserChanged"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /v1/sessions/{session_id}/diagnostics:
+    get:
+      tags: [Diagnostics]
+      summary: Get diagnostics
+      description: Returns session diagnostics. Token is required because diagnostics may expose sensitive request context.
+      operationId: getDiagnostics
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/RequiredToken"
+        - name: diagnostics_ref
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Diagnostics payload.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Diagnostics"
+        "401":
+          $ref: "#/components/responses/InvalidSessionToken"
+        "404":
+          $ref: "#/components/responses/SessionOrDiagnosticsNotFound"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /admin/v1/sessions/{session_id}/force-unbind:
+    post:
+      tags: [Admin]
+      summary: Force unbind session
+      description: Management-only endpoint for recovering a session that was not explicitly unbound.
+      operationId: adminForceUnbindSession
+      security:
+        - AdminApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session force unbound.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "401":
+          $ref: "#/components/responses/AdminUnauthorized"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "503":
+          $ref: "#/components/responses/BackendUnavailable"
+
+  /admin/v1/sessions/{session_id}:
+    delete:
+      tags: [Admin]
+      summary: Destroy session
+      description: Management-only endpoint that deletes an unbound session record and its user data directory.
+      operationId: adminDestroySession
+      security:
+        - AdminApiKey: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session destroyed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "401":
+          $ref: "#/components/responses/AdminUnauthorized"
+        "404":
+          $ref: "#/components/responses/SessionNotFound"
+        "409":
+          $ref: "#/components/responses/SessionBusy"
+        "500":
+          $ref: "#/components/responses/SessionDestroyFailed"
+
+components:
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: sess_01hv7r6s9z8x
+    OptionalToken:
+      name: token
+      in: query
+      required: false
+      schema:
+        type: string
+      example: btok_example
+    RequiredToken:
+      name: token
+      in: query
+      required: true
+      schema:
+        type: string
+      example: btok_example
+
+  responses:
+    InvalidRequest:
+      description: "Error code: invalid_request. Possible causes: request body, path, or query parameters do not match this operation's schema. Action: fix_request."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InvalidSessionToken:
+      description: "Error code: invalid_session_token. Possible causes: token is missing, malformed, expired by unbind, or does not own this session. Action: bind_session."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    AdminUnauthorized:
+      description: "Error code: admin_unauthorized. Possible causes: missing or invalid admin API key. Action: contact_admin."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InvalidTokenOrLoginRequired:
+      description: "Error codes: invalid_session_token, login_required. Possible causes: token does not own the session, or the session profile is not logged in. Actions: bind_session or login."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionNotFound:
+      description: "Error code: session_not_found. Possible causes: session_id does not exist or was destroyed. Action: fix_request."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionOrNoteNotFound:
+      description: "Error codes: session_not_found, note_unavailable. Possible causes: session_id does not exist, or the target note is missing/private/deleted/unavailable. Actions: fix_request or inspect_diagnostics."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionOrDiagnosticsNotFound:
+      description: "Error codes: session_not_found, diagnostics_not_found. Possible causes: session_id does not exist, or diagnostics_ref does not exist/has been cleaned up. Actions: fix_request or inspect_diagnostics."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionBusy:
+      description: "Error code: session_busy. Possible causes: another token currently owns this session. Action: unbind_or_force_unbind."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionQuotaExceeded:
+      description: "Error code: session_quota_exceeded. Possible causes: the interface layer has reached its configured session limit. Action: contact_admin."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InvalidOrStaleContext:
+      description: "Error codes: invalid_context, stale_context. Possible causes: supplied platform id does not match the current session position, or was invalidated by a later operation. Actions: reopen_note or refresh_search."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InvalidXsecToken:
+      description: "Error code: invalid_xsec_token. Possible causes: xsec_token is missing, expired, malformed, or incompatible with note_id. Action: refresh_search."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RiskBlocked:
+      description: "Error code: risk_blocked. Possible causes: platform risk control, verification requirement, or network/IP trust issue. Action: inspect_diagnostics."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RequestFailedOrParserChanged:
+      description: "Error codes: request_failed, parser_changed. Possible causes: platform request failed after retry, returned unusable data, or response schema changed. Actions: wait_and_retry or contact_admin."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    BackendUnavailable:
+      description: "Error code: backend_unavailable. Possible causes: browser, storage, queue, or internal dependency is unavailable. Action: wait_and_retry."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionCreateFailed:
+      description: "Error code: session_create_failed. Possible causes: user_data_dir creation or persistence failed. Action: inspect_diagnostics."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    SessionDestroyFailed:
+      description: "Error code: session_destroy_failed. Possible causes: user_data_dir cleanup or persistence deletion failed. Action: inspect_diagnostics."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        purpose:
+          type: string
+          maxLength: 256
+
+    TokenRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LoginActionRequest:
+      oneOf:
+        - $ref: "#/components/schemas/QrcodeLoginActionRequest"
+        - $ref: "#/components/schemas/CookieLoginActionRequest"
+        - $ref: "#/components/schemas/PhoneStartLoginActionRequest"
+        - $ref: "#/components/schemas/PhoneSubmitLoginActionRequest"
+      discriminator:
+        propertyName: action
+        mapping:
+          qrcode: "#/components/schemas/QrcodeLoginActionRequest"
+          cookie: "#/components/schemas/CookieLoginActionRequest"
+          phone_start: "#/components/schemas/PhoneStartLoginActionRequest"
+          phone_submit: "#/components/schemas/PhoneSubmitLoginActionRequest"
+
+    QrcodeLoginActionRequest:
+      type: object
+      required: [token, action]
+      properties:
+        token:
+          type: string
+        action:
+          type: string
+          const: qrcode
+
+    CookieLoginActionRequest:
+      type: object
+      required: [token, action, cookie]
+      properties:
+        token:
+          type: string
+        action:
+          type: string
+          const: cookie
+        cookie:
+          type: string
+          description: Required when action is cookie.
+
+    PhoneStartLoginActionRequest:
+      type: object
+      required: [token, action, phone]
+      properties:
+        token:
+          type: string
+        action:
+          type: string
+          const: phone_start
+        phone:
+          type: string
+          description: Required when action is phone_start.
+
+    PhoneSubmitLoginActionRequest:
+      type: object
+      required: [token, action, code]
+      properties:
+        token:
+          type: string
+        action:
+          type: string
+          const: phone_submit
+        code:
+          type: string
+          description: Required when action is phone_submit.
+
+    SearchPostsRequest:
+      type: object
+      required: [token, keyword]
+      properties:
+        token:
+          type: string
+        keyword:
+          type: string
+        sort:
+          type: string
+          enum: [general, time_descending, popularity_descending, comment_descending, collect_descending]
+          default: general
+        filters:
+          $ref: "#/components/schemas/SearchFilters"
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 20
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 20
+
+    SearchFilters:
+      type: object
+      description: Optional search filters. Omit the object or use defaults for unrestricted search.
+      additionalProperties: false
+      properties:
+        filter_note_type:
+          type: string
+          description: Note type filter.
+          enum: [不限, 视频笔记, 普通笔记]
+          default: 不限
+        filter_note_time:
+          type: string
+          description: Publish time filter.
+          enum: [不限, 一天内, 一周内, 半年内]
+          default: 不限
+        filter_note_range:
+          type: string
+          description: Search scope filter.
+          enum: [不限, 已看过, 未看过, 已关注]
+          default: 不限
+        filter_pos_distance:
+          type: string
+          description: Position distance filter.
+          enum: [不限, 同城, 附近]
+          default: 不限
+        latitude:
+          type: [number, "null"]
+          description: Latitude for location-based filters such as 同城 or 附近. The service converts latitude and longitude into the platform geo parameter.
+          default: null
+        longitude:
+          type: [number, "null"]
+          description: Longitude for location-based filters such as 同城 or 附近. The service converts latitude and longitude into the platform geo parameter.
+          default: null
+
+    OpenNoteFromSearchRequest:
+      type: object
+      required: [token, note_id]
+      properties:
+        token:
+          type: string
+        note_id:
+          type: string
+
+    OpenNoteByXsecRequest:
+      type: object
+      required: [token, note_id, xsec_token]
+      properties:
+        token:
+          type: string
+        note_id:
+          type: string
+        xsec_token:
+          type: string
+
+    FetchRootCommentsRequest:
+      type: object
+      required: [token, note_id]
+      properties:
+        token:
+          type: string
+        note_id:
+          type: string
+          description: Must match the currently opened note context.
+        cursor:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 10
+
+    FetchSubCommentsRequest:
+      type: object
+      required: [token, root_comment_id]
+      properties:
+        token:
+          type: string
+        root_comment_id:
+          type: string
+        cursor:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 5
+
+    SuccessEnvelope:
+      type: object
+      required: [ok, data, meta]
+      properties:
+        ok:
+          type: boolean
+          const: true
+        data:
+          type: object
+          additionalProperties: true
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ErrorEnvelope:
+      type: object
+      required: [ok, error, meta]
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          $ref: "#/components/schemas/ApiError"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ResponseMeta:
+      type: object
+      required: [request_id, operation, retry_count, warnings]
+      description: Shared response metadata. Required fields are returned by every operation. Optional fields are omitted when they do not apply; the service does not return null placeholders.
+      properties:
+        request_id:
+          type: string
+          description: Unique identifier for this interface-layer request. Use it to correlate client errors with server logs.
+        session_id:
+          type: string
+          description: Returned only when the operation is scoped to a specific session.
+        operation:
+          type: string
+          description: Stable operation identifier, matching the OpenAPI operationId.
+        retry_count:
+          type: integer
+          description: Number of internal retries performed by the interface layer before returning this response.
+          default: 0
+        warnings:
+          type: array
+          description: Non-fatal warnings produced while handling this request.
+          items:
+            type: string
+        diagnostics_ref:
+          type: string
+          description: Returned only when detailed diagnostics can be queried with the diagnostics endpoint.
+
+    ApiError:
+      type: object
+      required: [code, message, retryable, action]
+      description: Stable machine-readable error object. Client code should branch on code, retryable, and action instead of parsing message text.
+      properties:
+        code:
+          type: string
+          description: Stable business error code. This is the primary field for client-side branching.
+          enum:
+            - invalid_request
+            - session_not_found
+            - session_busy
+            - session_quota_exceeded
+            - session_create_failed
+            - session_destroy_failed
+            - invalid_session_token
+            - invalid_context
+            - stale_context
+            - login_required
+            - risk_blocked
+            - invalid_xsec_token
+            - note_unavailable
+            - diagnostics_not_found
+            - admin_unauthorized
+            - request_failed
+            - parser_changed
+            - backend_unavailable
+        message:
+          type: string
+          description: Human-readable error summary. It is not a stable contract for program logic.
+        retryable:
+          type: boolean
+          description: Whether the exact same request can be retried without changing parameters or session context.
+        action:
+          type: string
+          description: Suggested next action for the caller. This is a stable enum for application-layer recovery flow.
+          enum:
+            - fix_request
+            - bind_session
+            - unbind_or_force_unbind
+            - login
+            - reopen_note
+            - refresh_search
+            - wait_and_retry
+            - inspect_diagnostics
+            - contact_admin
+        details:
+          type: object
+          description: Safe structured context for debugging. Sensitive tokens, cookies, and raw private payloads must not be returned here.
+          additionalProperties: true
+
+    SessionCreated:
+      type: object
+      required: [session_id, status]
+      properties:
+        session_id:
+          type: string
+        purpose:
+          type: string
+        status:
+          type: string
+          enum: [idle]
+          example: idle
+
+    SessionBound:
+      type: object
+      required: [session_id, token, status]
+      properties:
+        session_id:
+          type: string
+        token:
+          type: string
+          description: Short ownership token. Store securely; it has no TTL.
+        status:
+          type: string
+          enum: [bound]
+          example: bound
+
+    SessionState:
+      type: object
+      additionalProperties: true
+      properties:
+        session_id:
+          type: string
+        status:
+          type: string
+          enum: [bound, idle]
+        purpose:
+          type: string
+        bound:
+          type: boolean
+        login:
+          $ref: "#/components/schemas/LoginStatus"
+        current_context:
+          type: object
+          additionalProperties: true
+        last_error:
+          $ref: "#/components/schemas/ApiError"
+        profile:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LoginStatus:
+      type: object
+      description: Current login flow state. QR-code login can require multiple sequential challenges; callers should always display the latest challenge_id/sequence returned here.
+      properties:
+        state:
+          type: string
+          enum: [not_started, waiting_qr_scan, waiting_qr_confirm, waiting_sms, ready, failed, risk_blocked, login_required]
+        required_action:
+          type: string
+          enum: [none, scan_qr, confirm_qr, submit_sms_code, retry_login, inspect_diagnostics, cookie]
+          default: none
+        challenge:
+          $ref: "#/components/schemas/LoginChallenge"
+        login_user:
+          type: object
+          additionalProperties: true
+        red_id:
+          type: string
+        user_id:
+          type: string
+        nickname:
+          type: string
+        last_error:
+          $ref: "#/components/schemas/ApiError"
+
+    LoginChallenge:
+      type: object
+      required: [challenge_id, type, sequence, status]
+      properties:
+        challenge_id:
+          type: string
+          description: Stable identifier for the current login challenge. A new value means the application should refresh its displayed challenge.
+        type:
+          type: string
+          enum: [login_qr, security_qr, sms_code]
+          description: Challenge kind. security_qr covers secondary QR verification after an initial QR scan succeeds.
+        sequence:
+          type: integer
+          minimum: 1
+          description: Monotonic challenge sequence within the current login flow.
+        status:
+          type: string
+          enum: [pending, scanned, confirmed, expired]
+        image_base64:
+          type: string
+          description: QR image payload when the current challenge requires scanning.
+        image_mime:
+          type: string
+          default: image/png
+        expires_at:
+          type: string
+          format: date-time
+        issued_at:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    SearchPostsResult:
+      type: object
+      required: [data, raw]
+      properties:
+        data:
+          $ref: "#/components/schemas/SearchPostsData"
+        raw:
+          type: object
+          additionalProperties: true
+          description: Original platform search response.
+
+    SearchPostsData:
+      type: object
+      required: [has_more, items]
+      properties:
+        has_more:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchPost"
+
+    SearchPost:
+      type: object
+      additionalProperties: false
+      required: [note_id, xsec_token, model_type, note_card_type, title, user, interact_info, cover, image_list, corner_tag_info]
+      properties:
+        note_id:
+          type: string
+          description: Mapped from the platform search item id.
+        xsec_token:
+          type: string
+        model_type:
+          type: string
+        note_card_type:
+          type: string
+        title:
+          type: string
+          description: Mapped from platform note_card.display_title.
+        user:
+          $ref: "#/components/schemas/UserInfo"
+        interact_info:
+          $ref: "#/components/schemas/InteractInfo"
+        cover:
+          $ref: "#/components/schemas/Dimensions"
+        image_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dimensions"
+        corner_tag_info:
+          type: array
+          items:
+            $ref: "#/components/schemas/CornerTagInfo"
+    NoteOpenResult:
+      type: object
+      required: [data, raw]
+      properties:
+        data:
+          $ref: "#/components/schemas/NoteDetail"
+        raw:
+          type: object
+          additionalProperties: true
+          description: Original note object extracted from the platform page state.
+
+    RootCommentsResult:
+      type: object
+      required: [data, raw]
+      properties:
+        data:
+          $ref: "#/components/schemas/RootCommentsData"
+        raw:
+          type: object
+          additionalProperties: true
+          description: Original platform root-comments response.
+
+    RootCommentsData:
+      type: object
+      required: [comments, cursor, has_more, time, xsec_token]
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/RootComment"
+        cursor:
+          type: string
+        has_more:
+          type: boolean
+        time:
+          type: integer
+        xsec_token:
+          type: string
+
+    SubCommentsResult:
+      type: object
+      required: [data, raw]
+      properties:
+        data:
+          $ref: "#/components/schemas/SubCommentsData"
+        raw:
+          type: object
+          additionalProperties: true
+          description: Original platform sub-comments response.
+
+    SubCommentsData:
+      type: object
+      required: [comments, cursor, has_more, time, xsec_token]
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubComment"
+        cursor:
+          type: string
+        has_more:
+          type: boolean
+        time:
+          type: integer
+        xsec_token:
+          type: string
+
+    UserInfo:
+      type: object
+      additionalProperties: false
+      required: [user_id, nickname, avatar, xsec_token]
+      properties:
+        user_id:
+          type: string
+        nickname:
+          type: string
+        avatar:
+          type: string
+        ai_agent:
+          type: boolean
+          nullable: true
+        xsec_token:
+          type: string
+
+    InteractInfo:
+      type: object
+      additionalProperties: false
+      required: [liked_count, collected_count, comment_count, shared_count]
+      properties:
+        liked_count:
+          type: string
+        collected_count:
+          type: string
+        comment_count:
+          type: string
+        shared_count:
+          type: string
+
+    Dimensions:
+      type: object
+      additionalProperties: false
+      required: [width, height]
+      properties:
+        width:
+          type: integer
+        height:
+          type: integer
+
+    CornerTagInfo:
+      type: object
+      additionalProperties: false
+      required: [type, text]
+      properties:
+        type:
+          type: string
+        text:
+          type: string
+
+    NoteDetail:
+      type: object
+      additionalProperties: false
+      required: [note_id, xsec_token, type, title, desc, time, last_update_time, ip_location, user, interact_info, image_list, tag_list, at_user_list, un_share]
+      properties:
+        note_id:
+          type: string
+        xsec_token:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        desc:
+          type: string
+        time:
+          type: integer
+        last_update_time:
+          type: integer
+        ip_location:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserInfo"
+        interact_info:
+          $ref: "#/components/schemas/InteractInfo"
+        image_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/NoteImage"
+        tag_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/NoteTag"
+        at_user_list:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        un_share:
+          type: boolean
+
+    NoteImage:
+      type: object
+      additionalProperties: false
+      required: [url, url_default, url_pre, width, height, live_photo, file_id, trace_id, info_list]
+      properties:
+        url:
+          type: string
+        url_default:
+          type: string
+        url_pre:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        live_photo:
+          type: boolean
+        file_id:
+          type: string
+        trace_id:
+          type: string
+        info_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageInfo"
+
+    ImageInfo:
+      type: object
+      additionalProperties: false
+      required: [image_scene, url]
+      properties:
+        image_scene:
+          type: string
+        url:
+          type: string
+
+    NoteTag:
+      type: object
+      additionalProperties: false
+      required: [id, name, type]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+
+    Comment:
+      type: object
+      additionalProperties: false
+      required: [comment_id, note_id, content, create_time, ip_location, like_count, status, user_info, at_users, show_tags, pictures]
+      properties:
+        comment_id:
+          type: string
+        note_id:
+          type: string
+        content:
+          type: string
+        create_time:
+          type: integer
+        ip_location:
+          type: string
+        like_count:
+          type: string
+        status:
+          type: integer
+        user_info:
+          $ref: "#/components/schemas/UserInfo"
+        at_users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfo"
+        show_tags:
+          type: array
+          items:
+            type: string
+        pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentPicture"
+
+    RootComment:
+      allOf:
+        - $ref: "#/components/schemas/Comment"
+        - type: object
+          required: [sub_comment_count, sub_comment_cursor, sub_comment_has_more, sub_comments]
+          properties:
+            sub_comment_count:
+              type: string
+            sub_comment_cursor:
+              type: string
+            sub_comment_has_more:
+              type: boolean
+            sub_comments:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubComment"
+
+    SubComment:
+      allOf:
+        - $ref: "#/components/schemas/Comment"
+        - type: object
+          required: [target_comment]
+          properties:
+            target_comment:
+              $ref: "#/components/schemas/TargetComment"
+
+    TargetComment:
+      type: object
+      additionalProperties: false
+      required: [comment_id, user_info]
+      properties:
+        comment_id:
+          type: string
+        user_info:
+          $ref: "#/components/schemas/UserInfo"
+    CommentPicture:
+      type: object
+      additionalProperties: false
+      required: [url_default, url_pre, width, height, info_list]
+      properties:
+        url_default:
+          type: string
+        url_pre:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        info_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageInfo"
+
+    Diagnostics:
+      type: object
+      additionalProperties: true
+      properties:
+        session_id:
+          type: string
+        last_error:
+          $ref: "#/components/schemas/ApiError"
+        request_stats:
+          type: object
+          additionalProperties: true
+        context:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    AdminApiKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: Admin API key.

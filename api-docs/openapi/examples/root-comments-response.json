@@ -1,0 +1,142 @@
+{
+  "ok": true,
+  "data": {
+    "data": {
+      "cursor": "6915bdaf000000003302557e",
+      "has_more": true,
+      "time": 1777588485531,
+      "xsec_token": "ABTzdYiPlRgCxEsbeq_69E9iCfXg1yH_kGH_eAa0l-BXg=",
+      "comments": [
+        {
+          "comment_id": "69156c4b0000000039023a14",
+          "note_id": "690632c500000000040134d0",
+          "content": "我真的不敢告诉别人我最长时间能达到多少天不洗澡……",
+          "create_time": 1763011659000,
+          "ip_location": "河南",
+          "like_count": "1568",
+          "status": 0,
+          "user_info": {
+            "user_id": "614e01f40000000002026f48",
+            "nickname": "vv",
+            "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example",
+            "ai_agent": false,
+            "xsec_token": "ABzz-rrQ_Zs_bIMjotA34dIkcKzAi8HDADH3mN6qodiw4="
+          },
+          "sub_comment_count": "69",
+          "sub_comment_cursor": "69156d26000000003803cdf8",
+          "sub_comment_has_more": true,
+          "pictures": [
+            {
+              "url_pre": "http://sns-webpic-qc.xhscdn.com/example/comment-pre.webp",
+              "url_default": "http://sns-webpic-qc.xhscdn.com/example/comment-default.webp",
+              "info_list": [
+                {
+                  "url": "http://sns-webpic-qc.xhscdn.com/example/comment-pre.webp",
+                  "image_scene": "WB_PRV"
+                },
+                {
+                  "url": "http://sns-webpic-qc.xhscdn.com/example/comment-default.webp",
+                  "image_scene": "WB_DFT"
+                }
+              ],
+              "height": 2640,
+              "width": 1200
+            }
+          ],
+          "at_users": [
+            {
+              "nickname": "Ymmmmmm",
+              "ai_agent": false,
+              "xsec_token": "ABdj8VGdFhON9qHkKN1lIVvpXuC6zwZdwUqlYG0vLXKFA=",
+              "user_id": "629883ec000000002102b86c",
+              "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example-at-user"
+            }
+          ],
+          "show_tags": [],
+          "sub_comments": [
+            {
+              "comment_id": "69156d26000000003803cdf8",
+              "note_id": "690632c500000000040134d0",
+              "content": "相信我，冬天去外面办一个洗头卡",
+              "create_time": 1763011878000,
+              "ip_location": "上海",
+              "like_count": "82",
+              "status": 0,
+              "user_info": {
+                "user_id": "66876c49000000000b030695",
+                "nickname": "demo",
+                "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example-sub",
+                "ai_agent": null,
+                "xsec_token": "ABsubExampleToken"
+              },
+              "target_comment": {
+                "comment_id": "69156c4b0000000039023a14",
+                "user_info": {
+                  "user_id": "614e01f40000000002026f48",
+                  "nickname": "vv",
+                  "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example",
+                  "ai_agent": false,
+                  "xsec_token": "ABzz-rrQ_Zs_bIMjotA34dIkcKzAi8HDADH3mN6qodiw4="
+                }
+              },
+              "at_users": [],
+              "show_tags": [],
+              "pictures": []
+            }
+          ]
+        }
+      ]
+    },
+    "raw": {
+      "cursor": "6915bdaf000000003302557e",
+      "has_more": true,
+      "time": 1777588485531,
+      "xsec_token": "ABTzdYiPlRgCxEsbeq_69E9iCfXg1yH_kGH_eAa0l-BXg=",
+      "user_id": "687f380a000000000d03d1b4",
+      "comments": [
+        {
+          "id": "69156c4b0000000039023a14",
+          "note_id": "690632c500000000040134d0",
+          "content": "我真的不敢告诉别人我最长时间能达到多少天不洗澡……",
+          "create_time": 1763011659000,
+          "ip_location": "河南",
+          "like_count": "1568",
+          "liked": false,
+          "status": 0,
+          "user_info": {
+            "user_id": "614e01f40000000002026f48",
+            "nickname": "vv",
+            "image": "https://sns-avatar-qc.xhscdn.com/avatar/example",
+            "ai_agent": false,
+            "xsec_token": "ABzz-rrQ_Zs_bIMjotA34dIkcKzAi8HDADH3mN6qodiw4="
+          },
+          "sub_comment_count": "69",
+          "sub_comment_cursor": "69156d26000000003803cdf8",
+          "sub_comment_has_more": true,
+          "sub_comments": [
+            {
+              "id": "69156d26000000003803cdf8",
+              "note_id": "690632c500000000040134d0",
+              "content": "相信我，冬天去外面办一个洗头卡",
+              "like_count": "82",
+              "target_comment": {
+                "id": "69156c4b0000000039023a14"
+              },
+              "user_info": {
+                "user_id": "66876c49000000000b030695",
+                "nickname": "西伯利亚的江南还记得黄浦江畔的今何在吗"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "request_id": "req_01hv7rd9pb13",
+    "session_id": "sess_01hv7r6s9z8x",
+    "operation": "fetchRootComments",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

@@ -1,0 +1,15 @@
+[project]
+name = "xhs-interface-layer"
+version = "0.1.0"
+description = "API-first XHS interface layer service"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.135.0",
+  "httpx>=0.28.1",
+  "mcp>=1.27.0",
+  "playwright>=1.45.0",
+  "uvicorn>=0.30.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

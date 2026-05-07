@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "data": {
+    "session_id": "sess_01hv7r6s9z8x",
+    "purpose": "xhs research",
+    "status": "idle"
+  },
+  "meta": {
+    "request_id": "req_01hv7r7g8f9a",
+    "operation": "createSession",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

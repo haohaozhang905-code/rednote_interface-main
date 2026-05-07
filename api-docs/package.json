@@ -1,0 +1,20 @@
+{
+  "name": "xhs-interface-api-docs",
+  "private": true,
+  "scripts": {
+    "preview": "npm run docs:preview",
+    "build:i18n": "npm run docs:generate",
+    "check:i18n": "node scripts/build-openapi-i18n.mjs --check",
+    "lint:zh": "redocly lint openapi/dist/openapi.zh.yaml",
+    "lint:en": "redocly lint openapi/dist/openapi.en.yaml",
+    "lint": "npm run docs:check",
+    "docs:generate": "node scripts/build-openapi-i18n.mjs",
+    "docs:check": "npm run docs:generate && npm run check:i18n && npm run lint:zh && npm run lint:en && node --check site/app.js",
+    "docs:preview": "npm run docs:generate && http-server . -a 127.0.0.1 -p 8088 -c-1"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.5",
+    "http-server": "^14.1.1",
+    "redoc": "^2.1.5"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "ok": true,
+  "data": {
+    "data": {
+      "note_id": "69e2facc000000001d01fcec",
+      "xsec_token": "ABgIO-4dr0Dc3L551Xw5yQ_JMuqv4XGn1G7hwvqmKwJHc=",
+      "type": "normal",
+      "title": "A➗这是顺便把咨询的棺材板盖上了",
+      "desc": "demo note detail",
+      "time": 1776483020000,
+      "last_update_time": 1776483161000,
+      "ip_location": "上海",
+      "user": {
+        "user_id": "558243a658944624a6c939bd",
+        "nickname": "一级棒的饲养员",
+        "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example",
+        "xsec_token": "ABLkcDVRMu99bt-3PMvBod9Yd6_c-keYhXYQqlTRH4-uE="
+      },
+      "interact_info": {
+        "shared_count": "373",
+        "liked_count": "742",
+        "collected_count": "901",
+        "comment_count": "66"
+      },
+      "image_list": [
+        {
+          "url": "",
+          "url_default": "http://sns-webpic-qc.xhscdn.com/example/default.jpg",
+          "url_pre": "http://sns-webpic-qc.xhscdn.com/example/pre.jpg",
+          "height": 2868,
+          "width": 1320,
+          "live_photo": false,
+          "file_id": "",
+          "trace_id": "",
+          "info_list": [
+            {
+              "image_scene": "WB_DFT",
+              "url": "http://sns-webpic-qc.xhscdn.com/example/default.jpg"
+            }
+          ]
+        }
+      ],
+      "tag_list": [
+        {
+          "id": "6198f6380000000001002175",
+          "name": "claude",
+          "type": "topic"
+        }
+      ],
+      "at_user_list": [],
+      "un_share": false
+    },
+    "raw": {
+      "xsecToken": "ABgIO-4dr0Dc3L551Xw5yQ_JMuqv4XGn1G7hwvqmKwJHc=",
+      "noteId": "69e2facc000000001d01fcec",
+      "imageList": [
+        {
+          "height": 2868,
+          "width": 1320,
+          "url": "",
+          "urlPre": "http://sns-webpic-qc.xhscdn.com/example/pre.jpg",
+          "urlDefault": "http://sns-webpic-qc.xhscdn.com/example/default.jpg",
+          "fileId": "",
+          "traceId": "",
+          "livePhoto": false,
+          "infoList": [
+            {
+              "imageScene": "WB_DFT",
+              "url": "http://sns-webpic-qc.xhscdn.com/example/default.jpg"
+            }
+          ]
+        }
+      ],
+      "time": 1776483020000,
+      "lastUpdateTime": 1776483161000,
+      "ipLocation": "上海",
+      "shareInfo": {
+        "unShare": false
+      },
+      "type": "normal",
+      "title": "A➗这是顺便把咨询的棺材板盖上了",
+      "desc": "demo note detail",
+      "user": {
+        "userId": "558243a658944624a6c939bd",
+        "nickname": "一级棒的饲养员",
+        "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/example",
+        "xsecToken": "ABLkcDVRMu99bt-3PMvBod9Yd6_c-keYhXYQqlTRH4-uE="
+      },
+      "interactInfo": {
+        "shareCount": "373",
+        "followed": false,
+        "relation": "none",
+        "liked": false,
+        "likedCount": "742",
+        "collected": false,
+        "collectedCount": "901",
+        "commentCount": "66"
+      },
+      "tagList": [
+        {
+          "id": "6198f6380000000001002175",
+          "name": "claude",
+          "type": "topic"
+        }
+      ],
+      "atUserList": []
+    }
+  },
+  "meta": {
+    "request_id": "req_01hv7rc0x4fb",
+    "session_id": "sess_01hv7r6s9z8x",
+    "operation": "openNoteFromSearch",
+    "retry_count": 0,
+    "warnings": []
+  }
+}

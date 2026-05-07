@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Node API docs toolchain
+api-docs/node_modules/
+api-docs/npm-debug.log*
+api-docs/yarn-debug.log*
+api-docs/yarn-error.log*
+api-docs/pnpm-debug.log*
+
+# Generated OpenAPI output
+api-docs/openapi/dist/
+
+# Runtime output
+data/
+logs/
+output/
+browser_data/
+runtime_data/
+*.log
+*.pid
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Playwright / test artifacts
+test-results/
+playwright-report/
+
+# Local agent artifacts
+AGENTS.md
+docs/superpowers/
+refer/

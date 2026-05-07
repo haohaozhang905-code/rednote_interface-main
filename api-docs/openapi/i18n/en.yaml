@@ -1,0 +1,151 @@
+info:
+  title: XHS Interface Layer API
+  license_name: MIT
+  description: |
+    API-first contract for the XHS interface layer.
+
+    The interface layer exposes API-only atomic tools over isolated sessions. Each
+    session owns its own user data directory. A session must be bound before any
+    state-changing or crawling operation can run, and the returned token is the
+    proof of current ownership.
+servers:
+  local: Local development server
+tags:
+  Sessions:
+    description: Public session lifecycle and binding operations.
+  Login:
+    description: Login actions and login status for a bound session.
+  Search:
+    description: Search operations that create current searchable note_id context.
+  Notes:
+    description: Note access operations that set the current note context.
+  Comments:
+    description: Comment operations constrained by the current note context.
+  Diagnostics:
+    description: Lightweight diagnostics for sessions and requests.
+  Admin:
+    description: Management-only operations. Normal applications must not call them directly.
+operations:
+  listSessions:
+    summary: List sessions
+    description: Returns session state dictionaries for normal application coordination. Sensitive paths, cookies, tokens, and raw diagnostics are not returned.
+    responses:
+      "200": Session list.
+  createSession:
+    summary: Create session
+    description: Creates a long-lived isolated identity container with a dedicated browser profile and the service default environment. Login state and runtime context are process-local and reset after service restart.
+    responses:
+      "201": Session created.
+  bindSession:
+    summary: Bind session
+    description: Claims exclusive use of an idle session and returns an ownership token. This endpoint does not accept profile configuration; cookie material is accepted only by the cookie login action.
+    responses:
+      "200": Session bound.
+      "409": Session is already bound.
+  unbindSession:
+    summary: Unbind session
+    description: Releases exclusive use of the session. The browser profile is kept; process-local login state and runtime context are kept only while the process is alive.
+    responses:
+      "200": Session unbound.
+  runLoginAction:
+    summary: Run login action
+    description: Uses one endpoint for all login actions. The action field selects the concrete login behavior.
+    responses:
+      "200": Login action accepted or completed.
+  getLoginStatus:
+    summary: Get login status
+    description: Pure query. Token is optional and only used for logging and traceability when present.
+    responses:
+      "200": Login status.
+  searchPosts:
+    summary: Search posts
+    description: Searches posts and records returned note_id values as the current search context; the response keeps the original platform search response.
+    responses:
+      "200": Search result.
+  openNoteFromSearch:
+    summary: Open note from search result
+    description: Opens a note by note_id from the current search context; the response keeps the original note object extracted from page state.
+    responses:
+      "200": Current note context updated.
+  openNoteByXsec:
+    summary: Open note by xsec
+    description: Opens a note by directly constructing the explorer URL from note_id and xsec parameters; the response keeps the original note object extracted from page state.
+    responses:
+      "200": Current note context updated.
+  fetchRootComments:
+    summary: Fetch root comments
+    description: Fetches root comments for the current note context only; the response keeps the original platform comment response under one result-level raw field.
+    responses:
+      "200": Root comments.
+  fetchSubComments:
+    summary: Fetch sub-comments
+    description: Fetches sub-comments for a root_comment_id that belongs to the current note context; the response keeps the original platform comment response.
+    responses:
+      "200": Sub-comments.
+  getDiagnostics:
+    summary: Get diagnostics
+    description: Returns session diagnostics. Token is required because diagnostics may expose sensitive request context.
+    responses:
+      "200": Diagnostics payload.
+  adminForceUnbindSession:
+    summary: Force unbind session
+    description: Management-only endpoint for recovering a session that was not explicitly unbound.
+    responses:
+      "200": Session force unbound.
+  adminDestroySession:
+    summary: Destroy session
+    description: Management-only endpoint that deletes an unbound session record and its user data directory.
+    responses:
+      "200": Session destroyed.
+fields:
+  cookie: Required when action is cookie.
+  phone: Required when action is phone_start.
+  code: Required when action is phone_submit.
+  note_context_guard: Current note context guard. Must match the currently opened note_id.
+  token_ownership: Short ownership token. Store securely; it has no TTL.
+schemas:
+  SearchFilters:
+    description: Optional search filters. Omit the object or use defaults for unrestricted search.
+    properties:
+      filter_note_type: Note type filter.
+      filter_note_time: Publish time filter.
+      filter_note_range: Search scope filter.
+      filter_pos_distance: Position distance filter.
+      latitude: Latitude for location-based filters such as 同城 or 附近. The service converts latitude and longitude into the platform geo parameter.
+      longitude: Longitude for location-based filters such as 同城 or 附近. The service converts latitude and longitude into the platform geo parameter.
+meta:
+  description: Shared response metadata. Required fields are returned by every operation. Optional fields are omitted when they do not apply; the service does not return null placeholders.
+  properties:
+    request_id: Unique identifier for this interface-layer request. Use it to correlate client errors with server logs.
+    session_id: Returned only when the operation is scoped to a specific session.
+    operation: Stable operation identifier, matching the OpenAPI operationId.
+    retry_count: Number of internal retries performed by the interface layer before returning this response.
+    warnings: Non-fatal warnings produced while handling this request.
+    diagnostics_ref: Returned only when detailed diagnostics can be queried with the diagnostics endpoint.
+error:
+  description: Stable machine-readable error object. Client code should branch on code, retryable, and action instead of parsing message text.
+  properties:
+    code: Stable business error code. This is the primary field for client-side branching.
+    message: Human-readable error summary. It is not a stable contract for program logic.
+    retryable: Whether the exact same request can be retried without changing parameters or session context.
+    action: Suggested next action for the caller. This is a stable enum for application-layer recovery flow.
+    details: Safe structured context for debugging. Sensitive tokens, cookies, and raw private payloads must not be returned here.
+component_responses:
+  InvalidRequest: "Error code: invalid_request. Possible causes: request body, path, or query parameters do not match this operation's schema. Action: fix_request."
+  InvalidSessionToken: "Error code: invalid_session_token. Possible causes: token is missing, malformed, expired by unbind, or does not own this session. Action: bind_session."
+  AdminUnauthorized: "Error code: admin_unauthorized. Possible causes: missing or invalid admin API key. Action: contact_admin."
+  InvalidTokenOrLoginRequired: "Error codes: invalid_session_token, login_required. Possible causes: token does not own the session, or the session profile is not logged in. Actions: bind_session or login."
+  SessionNotFound: "Error code: session_not_found. Possible causes: session_id does not exist or was destroyed. Action: fix_request."
+  SessionOrNoteNotFound: "Error codes: session_not_found, note_unavailable. Possible causes: session_id does not exist, or the target note is missing/private/deleted/unavailable. Actions: fix_request or inspect_diagnostics."
+  SessionOrDiagnosticsNotFound: "Error codes: session_not_found, diagnostics_not_found. Possible causes: session_id does not exist, or diagnostics_ref does not exist/has been cleaned up. Actions: fix_request or inspect_diagnostics."
+  SessionBusy: "Error code: session_busy. Possible causes: another token currently owns this session. Action: unbind_or_force_unbind."
+  SessionQuotaExceeded: "Error code: session_quota_exceeded. Possible causes: the interface layer has reached its configured session limit. Action: contact_admin."
+  InvalidOrStaleContext: "Error codes: invalid_context, stale_context. Possible causes: supplied platform id does not match the current session position, or was invalidated by a later operation. Actions: reopen_note or refresh_search."
+  InvalidXsecToken: "Error code: invalid_xsec_token. Possible causes: xsec_token is missing, expired, malformed, or incompatible with note_id. Action: refresh_search."
+  RiskBlocked: "Error code: risk_blocked. Possible causes: platform risk control, verification requirement, or network/IP trust issue. Action: inspect_diagnostics."
+  RequestFailedOrParserChanged: "Error codes: request_failed, parser_changed. Possible causes: platform request failed after retry, returned unusable data, or response schema changed. Actions: wait_and_retry or contact_admin."
+  BackendUnavailable: "Error code: backend_unavailable. Possible causes: browser, storage, queue, or internal dependency is unavailable. Action: wait_and_retry."
+  SessionCreateFailed: "Error code: session_create_failed. Possible causes: user_data_dir creation or persistence failed. Action: inspect_diagnostics."
+  SessionDestroyFailed: "Error code: session_destroy_failed. Possible causes: user_data_dir cleanup or persistence deletion failed. Action: inspect_diagnostics."
+security:
+  admin_api_key: Admin API key.

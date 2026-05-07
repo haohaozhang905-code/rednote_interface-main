@@ -1,0 +1,20 @@
+{
+  "ok": false,
+  "error": {
+    "code": "invalid_context",
+    "message": "root_comment_id does not belong to current note context",
+    "retryable": false,
+    "action": "reopen_note",
+    "details": {
+      "current_note_id": "690632c500000000040134d0"
+    }
+  },
+  "meta": {
+    "request_id": "req_01hv7rdq2w90",
+    "session_id": "sess_01hv7r6s9z8x",
+    "operation": "fetchSubComments",
+    "retry_count": 0,
+    "warnings": [],
+    "diagnostics_ref": "diag_01hv7rdtqa1m"
+  }
+}
