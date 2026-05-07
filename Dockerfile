@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 8000
 
 # 启动
-CMD ["python3", "run.py"]
+CMD ["python3", "run.py", "--host", "0.0.0.0"]

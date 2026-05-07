@@ -44,8 +44,8 @@ def _resolve_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("--host", default=os.getenv("HOST", "127.0.0.1"), help="监听地址（默认 127.0.0.1，也可通过 HOST 环境变量设置）")
-    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")), help="监听端口（默认 8000，也可通过 PORT 环境变量设置）")
+    parser.add_argument("--host", default="0.0.0.0", help="监听地址（默认 0.0.0.0，Docker 部署无需修改）")
+    parser.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
     parser.add_argument("--mock", action="store_true", help="Mock 模式运行，无需浏览器和 Cookie")
     parser.add_argument("--headless", action="store_true", help="浏览器以无头模式运行（服务器部署用）")
     parser.add_argument("--profile-root", default=None, help="浏览器 profile 存储目录（默认 browser_data/sessions）")
