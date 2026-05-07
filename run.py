@@ -58,7 +58,7 @@ def _apply_env(args: argparse.Namespace) -> None:
     if args.mock:
         os.environ.setdefault("XHS_INTERFACE_RUNTIME", "mock")
     if args.headless:
-        os.environ.setdefault("XHS_BROWSER_HEADLESS", "true")
+        os.environ.setdefault("XHS_INTERFACE_BROWSER_HEADLESS", "true")
     if args.profile_root:
         os.environ["XHS_INTERFACE_PROFILE_ROOT"] = args.profile_root
 

@@ -28,6 +28,9 @@ RUN CHROME_PATH=$(find /root/.cache/ms-playwright -name "chrome" -type f 2>/dev/
 # 复制项目代码
 COPY . .
 
+# 设置默认环境变量（容器内必须无头模式）
+ENV XHS_INTERFACE_BROWSER_HEADLESS=true
+
 # 暴露端口
 EXPOSE 8000
 
